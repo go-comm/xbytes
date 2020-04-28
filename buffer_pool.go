@@ -78,3 +78,32 @@ func (bp *bufferPool) PutBuffer(buf *bytes.Buffer) {
 	pool := bp.extractPool(buf.Cap())
 	pool.Put(buf)
 }
+
+type SingleBufferPool interface {
+	GetBuffer() *bytes.Buffer
+	PutBuffer(buf *bytes.Buffer)
+}
+
+func NewSingleBufferPool() SingleBufferPool {
+	return &singleBufferPool{}
+}
+
+type singleBufferPool struct {
+	pool sync.Pool
+}
+
+func (bp *singleBufferPool) GetBuffer() *bytes.Buffer {
+	v := bp.pool.Get()
+	if v != nil {
+		return v.(*bytes.Buffer)
+	}
+	return new(bytes.Buffer)
+}
+
+func (bp *singleBufferPool) PutBuffer(buf *bytes.Buffer) {
+	if buf == nil {
+		return
+	}
+	buf.Reset()
+	bp.pool.Put(buf)
+}
