@@ -6,6 +6,10 @@ import (
 	"io"
 )
 
+func NewBytebuf(buf []byte) *Bytebuf {
+	return &Bytebuf{buf: buf}
+}
+
 type Bytebuf struct {
 	off int
 	buf []byte
