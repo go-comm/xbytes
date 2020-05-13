@@ -64,6 +64,7 @@ func (b *Bytebuf) Reset() {
 }
 func (b *Bytebuf) SetBuf(buf []byte) error {
 	b.buf = buf
+	b.off = 0
 	return nil
 }
 

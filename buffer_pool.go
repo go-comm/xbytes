@@ -25,7 +25,7 @@ func NewBufferPool(minCap, maxCap int) BufferPool {
 	min := roundLog2(minCap)
 	max := roundLog2(maxCap)
 	if max < min {
-		panic(fmt.Sprintf("[Buffer] normalize min %v, max %v", min, max))
+		panic(fmt.Sprintf("xbytes.bufferpool: normalize min %v, max %v", min, max))
 	}
 	bp := &bufferPool{
 		min:   min,
@@ -45,7 +45,7 @@ type bufferPool struct {
 func (bp *bufferPool) extractPool(cap int) *sync.Pool {
 	normalize := roundLog2(cap)
 	if normalize > bp.max {
-		panic(fmt.Sprintf("[Buffer] except <%v, but %v and normalize %v", bp.max, cap, normalize))
+		panic(fmt.Sprintf("xbytes.bufferpool: except <%v, but %v and normalize %v", bp.max, cap, normalize))
 	}
 	n := normalize - bp.min
 	pool := bp.pools[n]
