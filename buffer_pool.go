@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	DefaultBufferPool = NewBufferPool(16, 1<<30)
+	DefaultBufferPool = NewBufferPool(64, 1<<30)
 
 	DefaultSingleBufferPool = NewSingleBufferPool()
 )

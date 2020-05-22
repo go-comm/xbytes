@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	DefaultBytebufPool = NewBytebufPool(16, 1<<30)
+	DefaultBytebufPool = NewBytebufPool(64, 1<<30)
 )
 
 type BytebufPool interface {

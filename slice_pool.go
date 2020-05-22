@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-var DefaultSlicePool = NewSlicePool(16, 1<<30)
+var DefaultSlicePool = NewSlicePool(64, 1<<30)
 
 type SlicePool interface {
 	Get(cap int) []byte
@@ -57,8 +57,9 @@ func (sp *slicePool) extractPool(cap int) *sync.Pool {
 
 func (sp *slicePool) Get(cap int) []byte {
 	pool := sp.extractPool(cap)
-	b := pool.Get()
-	return b.([]byte)
+	o := pool.Get()
+	b := o.([]byte)
+	return b[:cap]
 }
 
 func (sp *slicePool) Put(b []byte) {
