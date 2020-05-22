@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-var DefaultSlicePool = NewBufferPool(16, 1<<30)
+var DefaultSlicePool = NewSlicePool(16, 1<<30)
 
 type SlicePool interface {
 	Get(cap int) []byte
