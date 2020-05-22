@@ -6,19 +6,15 @@ import (
 	"sync"
 )
 
-var globalBufferPool = NewBufferPool(16, 1<<26)
+var (
+	DefaultBufferPool = NewBufferPool(16, 1<<30)
 
-func GetBuffer(cap int) *bytes.Buffer {
-	return globalBufferPool.GetBuffer(cap)
-}
-
-func PutBuffer(buf *bytes.Buffer) {
-	globalBufferPool.PutBuffer(buf)
-}
+	DefaultSingleBufferPool = NewSingleBufferPool()
+)
 
 type BufferPool interface {
-	GetBuffer(cap int) *bytes.Buffer
-	PutBuffer(buf *bytes.Buffer)
+	Get(cap int) *bytes.Buffer
+	Put(buf *bytes.Buffer)
 }
 
 func NewBufferPool(minCap, maxCap int) BufferPool {
@@ -64,13 +60,13 @@ func (bp *bufferPool) extractPool(cap int) *sync.Pool {
 	return pool
 }
 
-func (bp *bufferPool) GetBuffer(cap int) *bytes.Buffer {
+func (bp *bufferPool) Get(cap int) *bytes.Buffer {
 	pool := bp.extractPool(cap)
 	buf := pool.Get()
 	return buf.(*bytes.Buffer)
 }
 
-func (bp *bufferPool) PutBuffer(buf *bytes.Buffer) {
+func (bp *bufferPool) Put(buf *bytes.Buffer) {
 	if buf == nil {
 		return
 	}
@@ -80,8 +76,8 @@ func (bp *bufferPool) PutBuffer(buf *bytes.Buffer) {
 }
 
 type SingleBufferPool interface {
-	GetBuffer() *bytes.Buffer
-	PutBuffer(buf *bytes.Buffer)
+	Get() *bytes.Buffer
+	Put(buf *bytes.Buffer)
 }
 
 func NewSingleBufferPool() SingleBufferPool {
@@ -92,7 +88,7 @@ type singleBufferPool struct {
 	pool sync.Pool
 }
 
-func (bp *singleBufferPool) GetBuffer() *bytes.Buffer {
+func (bp *singleBufferPool) Get() *bytes.Buffer {
 	v := bp.pool.Get()
 	if v != nil {
 		return v.(*bytes.Buffer)
@@ -100,7 +96,7 @@ func (bp *singleBufferPool) GetBuffer() *bytes.Buffer {
 	return new(bytes.Buffer)
 }
 
-func (bp *singleBufferPool) PutBuffer(buf *bytes.Buffer) {
+func (bp *singleBufferPool) Put(buf *bytes.Buffer) {
 	if buf == nil {
 		return
 	}

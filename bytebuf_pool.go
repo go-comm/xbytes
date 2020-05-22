@@ -5,19 +5,13 @@ import (
 	"sync"
 )
 
-var globalBytebufPool = NewBytebufPool(16, 1<<26)
-
-func GetBytebuf(cap int) *Bytebuf {
-	return globalBytebufPool.GetBytebuf(cap)
-}
-
-func PutBytebuf(buf *Bytebuf) {
-	globalBytebufPool.PutBytebuf(buf)
-}
+var (
+	DefaultBytebufPool = NewBytebufPool(16, 1<<30)
+)
 
 type BytebufPool interface {
-	GetBytebuf(cap int) *Bytebuf
-	PutBytebuf(buf *Bytebuf)
+	Get(cap int) *Bytebuf
+	Put(buf *Bytebuf)
 }
 
 func NewBytebufPool(minCap, maxCap int) BytebufPool {
@@ -63,13 +57,13 @@ func (bp *bytebufPool) extractPool(cap int) *sync.Pool {
 	return pool
 }
 
-func (bp *bytebufPool) GetBytebuf(cap int) *Bytebuf {
+func (bp *bytebufPool) Get(cap int) *Bytebuf {
 	pool := bp.extractPool(cap)
 	buf := pool.Get()
 	return buf.(*Bytebuf)
 }
 
-func (bp *bytebufPool) PutBytebuf(buf *Bytebuf) {
+func (bp *bytebufPool) Put(buf *Bytebuf) {
 	if buf == nil {
 		return
 	}

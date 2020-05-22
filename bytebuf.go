@@ -42,10 +42,11 @@ func (b *Bytebuf) SetOffset(n int) (err error) {
 	return
 }
 
-func (b *Bytebuf) Next(n int) (err error) {
+func (b *Bytebuf) Next(n int) (d []byte, err error) {
 	if err = b.tryRead(n); err != nil {
 		return
 	}
+	d = b.buf[b.off : b.off+n]
 	b.off += n
 	return
 }
