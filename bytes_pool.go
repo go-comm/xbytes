@@ -5,20 +5,20 @@ import (
 	"sync"
 )
 
-var DefaultSlicePool = NewSlicePool(64, 1<<30)
+var DefaultBytesPool = NewBytesPool(64, 1<<30)
 
-type SlicePool interface {
+type BytesPool interface {
 	Get(cap int) []byte
 	Put(b []byte)
 }
 
-func NewSlicePool(minCap, maxCap int) SlicePool {
+func NewBytesPool(minCap, maxCap int) BytesPool {
 	min := roundLog2(minCap)
 	max := roundLog2(maxCap)
 	if max < min {
-		panic(fmt.Sprintf("xbytes.slicePool: normalize min %v, max %v", min, max))
+		panic(fmt.Sprintf("xbytes.bytesPool: normalize min %v, max %v", min, max))
 	}
-	sp := &slicePool{
+	sp := &bytesPool{
 		min:   min,
 		max:   max,
 		pools: make([]*sync.Pool, max-min+1),
@@ -26,17 +26,17 @@ func NewSlicePool(minCap, maxCap int) SlicePool {
 	return sp
 }
 
-type slicePool struct {
+type bytesPool struct {
 	min   int
 	max   int
 	pools []*sync.Pool
 	sync.RWMutex
 }
 
-func (sp *slicePool) extractPool(cap int) *sync.Pool {
+func (sp *bytesPool) extractPool(cap int) *sync.Pool {
 	normalize := roundLog2(cap)
 	if normalize > sp.max {
-		panic(fmt.Sprintf("xbytes.slicePool: except <%v, but %v and normalize %v", sp.max, cap, normalize))
+		panic(fmt.Sprintf("xbytes.bytesPool: except <%v, but %v and normalize %v", sp.max, cap, normalize))
 	}
 	n := normalize - sp.min
 	pool := sp.pools[n]
@@ -55,14 +55,14 @@ func (sp *slicePool) extractPool(cap int) *sync.Pool {
 	return pool
 }
 
-func (sp *slicePool) Get(cap int) []byte {
+func (sp *bytesPool) Get(cap int) []byte {
 	pool := sp.extractPool(cap)
 	o := pool.Get()
 	b := o.([]byte)
 	return b[:cap]
 }
 
-func (sp *slicePool) Put(b []byte) {
+func (sp *bytesPool) Put(b []byte) {
 	if b == nil {
 		return
 	}
