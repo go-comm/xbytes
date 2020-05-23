@@ -19,19 +19,44 @@ func NewBytesReader(r io.Reader) *BytesReader {
 		return br
 	}
 	if breader, ok := r.(io.ByteReader); ok {
-		return &BytesReader{r, breader}
+		return &BytesReader{nil, r, breader}
 	}
-	return &BytesReader{r, nil}
+	return &BytesReader{nil, r, nil}
 }
 
 type BytesReader struct {
+	err error
 	io.Reader
 	breader io.ByteReader
 }
 
+func (br *BytesReader) Error() error {
+	return br.err
+}
+
+func (br *BytesReader) ReadAtLeast(r io.Reader, buf []byte, min int) (n int, err error) {
+	if br.err != nil {
+		return 0, br.err
+	}
+	n, err = io.ReadAtLeast(r, buf, min)
+	br.err = err
+	return
+}
+
+func (br *BytesReader) Read(p []byte) (n int, err error) {
+	if br.err != nil {
+		return 0, br.err
+	}
+	n, err = br.Reader.Read(p)
+	br.err = err
+	return
+}
+
 func (br *BytesReader) ReadByte() (byte, error) {
 	if br.breader != nil {
-		return br.breader.ReadByte()
+		v, err := br.breader.ReadByte()
+		br.err = err
+		return v, err
 	}
 	b := []byte{0}
 	n, err := br.Read(b)
@@ -56,7 +81,7 @@ func (br *BytesReader) DecodeInt8() (int8, error) {
 
 func (br *BytesReader) DecodeUint16() (uint16, error) {
 	b := []byte{0, 0}
-	_, err := io.ReadAtLeast(br, b, 2)
+	_, err := br.ReadAtLeast(br, b, 2)
 	if err != nil {
 		return 0, err
 	}
@@ -70,7 +95,7 @@ func (br *BytesReader) DecodeInt16() (int16, error) {
 
 func (br *BytesReader) DecodeUint32() (uint32, error) {
 	b := []byte{0, 0, 0, 0}
-	_, err := io.ReadAtLeast(br, b, 4)
+	_, err := br.ReadAtLeast(br, b, 4)
 	if err != nil {
 		return 0, err
 	}
@@ -84,7 +109,7 @@ func (br *BytesReader) DecodeInt32() (int32, error) {
 
 func (br *BytesReader) DecodeUint64() (uint64, error) {
 	b := []byte{0, 0, 0, 0, 0, 0, 0, 0}
-	_, err := io.ReadAtLeast(br, b, 8)
+	_, err := br.ReadAtLeast(br, b, 8)
 	if err != nil {
 		return 0, err
 	}
@@ -111,7 +136,7 @@ func (br *BytesReader) DecodeBytes(p []byte) (n int, err error) {
 		return 0, err
 	}
 	n = int(un)
-	return io.ReadAtLeast(br, p, n)
+	return br.ReadAtLeast(br, p, n)
 }
 
 func (br *BytesReader) DecodeAllocBytes() (p []byte, err error) {
@@ -122,10 +147,11 @@ func (br *BytesReader) DecodeAllocBytes() (p []byte, err error) {
 	}
 	n := int(un)
 	if n > maxBytesLength {
+		br.err = ErrLargeBytesLength
 		return nil, ErrLargeBytesLength
 	}
 	p = make([]byte, n)
-	_, err = io.ReadAtLeast(br, p[:], n)
+	_, err = br.ReadAtLeast(br, p[:], n)
 	if err != nil {
 		return nil, err
 	}
