@@ -44,6 +44,9 @@ func (bp *bufferPool) extractPool(cap int) *sync.Pool {
 		panic(fmt.Sprintf("xbytes.bufferpool: except <%v, but %v and normalize %v", bp.max, cap, normalize))
 	}
 	n := normalize - bp.min
+	if n < 0 {
+		n = 0
+	}
 	pool := bp.pools[n]
 	if pool == nil {
 		bp.Lock()

@@ -39,6 +39,9 @@ func (sp *bytesPool) extractPool(cap int) *sync.Pool {
 		panic(fmt.Sprintf("xbytes.bytesPool: except <%v, but %v and normalize %v", sp.max, cap, normalize))
 	}
 	n := normalize - sp.min
+	if n < 0 {
+		n = 0
+	}
 	pool := sp.pools[n]
 	if pool == nil {
 		sp.Lock()
